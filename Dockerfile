@@ -22,20 +22,18 @@ ENV HOME /home/rails
 WORKDIR /home/rails
 RUN git clone https://github.com/sstephenson/rbenv.git /home/rails/.rbenv
 RUN git clone https://github.com/sstephenson/ruby-build.git /home/rails/.rbenv/plugins/ruby-build
-ENV PATH /home/rails/.rbenv/bin:$PATH
-RUN echo 'eval "$(rbenv init -)"' >> .bashrc
-USER root
-RUN echo 'eval "$(rbenv init -)"' >> /etc/profile.d/rbenv.sh # or /etc/profile
+ENV PATH ${HOME}/.rbenv/bin:${PATH}
+RUN echo 'export PATH=${HOME}/.rbenv/bin:${PATH}' >> ~/.bash_profile
+RUN echo 'eval "$(rbenv init -)"' >> ~/.bash_profile
 
 # Install multiple versions of ruby
-USER rails
 ENV CONFIGURE_OPTS --disable-install-doc
 ADD ./ruby-versions /home/rails/ruby-versions
 RUN xargs -L 1 rbenv install < /home/rails/ruby-versions
 
 # Install Bundler for each version of ruby
 RUN echo 'gem: --no-rdoc --no-ri' >> /home/rails/.gemrc
-RUN bash -l -c 'for v in $(cat /home/rails/ruby-versions); do rbenv global $v; gem install bundler; done'
+RUN bash -l -c 'eval "$(rbenv init -)"; for v in $(cat /home/rails/ruby-versions); do rbenv global $v; gem install bundler; done'
 
 # Create application directory
 USER root
